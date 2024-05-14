@@ -1,0 +1,142 @@
+import java.util.*;
+
+class Grafo {
+    private List<String> nodos; 
+    private Map<String, List<Arista>> aristas; 
+
+    public Grafo() {
+        this.nodos = new ArrayList<>();
+        this.aristas = new HashMap<>();
+    }
+
+    // añadir un nodo al grafo
+    public void agregarNodo(String nodo) {
+        if (!nodos.contains(nodo)) {
+            nodos.add(nodo);
+            aristas.put(nodo, new ArrayList<>());
+        }
+    }
+
+    // añadir una arista entre dos nodos con peso
+    public void agregarArista(String nodo1, String nodo2, int peso) {
+        if (!nodos.contains(nodo1) || !nodos.contains(nodo2)) {
+            throw new IllegalArgumentException("Los nodos deben existir en el grafo.");
+        }
+        aristas.get(nodo1).add(new Arista(nodo2, peso));
+        aristas.get(nodo2).add(new Arista(nodo1, peso));
+    }
+
+    public List<String> obtenerNodos() {
+        return nodos;
+    }
+
+    public Map<String, List<Arista>> obtenerAristas() {
+        return aristas;
+    }
+
+    // representar una arista
+    class Arista {
+        String nodo;
+        int peso;
+
+        Arista(String nodo, int peso) {
+            this.nodo = nodo;
+            this.peso = peso;
+        }
+
+        public String obtenerNodo() {
+            return nodo;
+        }
+
+        public int obtenerPeso() {
+            return peso;
+        }
+    }
+}
+
+//algoritmo de Dijkstra
+class Dijkstra {
+    public static List<String> caminoMasCorto(Grafo grafo, String nodoInicio, String nodoFin) {
+        if (!grafo.obtenerNodos().contains(nodoInicio) || !grafo.obtenerNodos().contains(nodoFin)) {
+            throw new IllegalArgumentException("Los nodos de inicio y fin deben existir en el grafo.");
+        }
+
+        Map<String, Integer> distancias = new HashMap<>();
+        Map<String, String> previos = new HashMap<>();
+        Set<String> visitados = new HashSet<>();
+        List<String> camino = new ArrayList<>();
+
+        for (String nodo : grafo.obtenerNodos()) {
+            distancias.put(nodo, Integer.MAX_VALUE);
+            previos.put(nodo, null);
+        }
+
+        distancias.put(nodoInicio, 0);
+
+        while (visitados.size() < grafo.obtenerNodos().size()) {
+            String nodoActual = obtenerNodoMin(distancias, visitados);
+            if (nodoActual == null || distancias.get(nodoActual) == Integer.MAX_VALUE) {
+                break;
+            }
+            visitados.add(nodoActual);
+
+            // Actualizar distancias
+            for (Grafo.Arista vecino : grafo.obtenerAristas().get(nodoActual)) {
+                if (!visitados.contains(vecino.obtenerNodo())) {
+                    int nuevaDistancia = distancias.get(nodoActual) + vecino.obtenerPeso();
+                    if (nuevaDistancia < distancias.get(vecino.obtenerNodo())) {
+                        distancias.put(vecino.obtenerNodo(), nuevaDistancia);
+                        previos.put(vecino.obtenerNodo(), nodoActual);
+                    }
+                }
+            }
+        }
+
+        // Construir el camino más corto
+        String nodoActual = nodoFin;
+        while (nodoActual != null) {
+            camino.add(0, nodoActual);
+            nodoActual = previos.get(nodoActual);
+        }
+
+        //el nodo de inicio esté en el camino
+        if (!camino.isEmpty() && !camino.get(0).equals(nodoInicio)) {
+            return new ArrayList<>();
+        }
+
+        return camino;
+    }
+
+    private static String obtenerNodoMin(Map<String, Integer> distancias, Set<String> visitados) {
+        String nodoMin = null;
+        int distanciaMin = Integer.MAX_VALUE;
+
+        for (Map.Entry<String, Integer> entrada : distancias.entrySet()) {
+            if (!visitados.contains(entrada.getKey()) && entrada.getValue() < distanciaMin) {
+                distanciaMin = entrada.getValue();
+                nodoMin = entrada.getKey();
+            }
+        }
+
+        return nodoMin;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // Se crea el grafo, nodos y aristas
+        Grafo grafo = new Grafo();
+        grafo.agregarNodo("A");
+        grafo.agregarNodo("B");
+        grafo.agregarNodo("C");
+        grafo.agregarNodo("D");
+
+        grafo.agregarArista("A", "B", 1);
+        grafo.agregarArista("B", "C", 2);
+        grafo.agregarArista("C", "D", 3);
+        grafo.agregarArista("A", "D", 5);
+
+        // camino más corto
+        List<String> caminoMasCorto = Dijkstra.caminoMasCorto(grafo, "A", "D");
+        System.out.println(caminoMasCorto); 
+}
